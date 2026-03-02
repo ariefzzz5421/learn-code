@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Math Quest Adventure</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --sky: #0f1b2d;
+    --gold: #f5c842;
+    --orange: #ff7043;
+    --teal: #00bfa5;
+    --pink: #e91e8c;
+    --correct: #00e676;
+    --wrong: #ff1744;
+    --card: rgba(255,255,255,0.07);
+    --border: rgba(255,255,255,0.12);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--sky);
+    font-family: 'Nunito', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+    color: #fff;
+  }
+
+  /* Stars bg */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      radial-gradient(1px 1px at 10% 20%, rgba(255,255,255,0.6) 0%, transparent 100%),
+      radial-gradient(1px 1px at 30% 60%, rgba(255,255,255,0.4) 0%, transparent 100%),
+      radial-gradient(1.5px 1.5px at 50% 10%, rgba(255,255,255,0.7) 0%, transparent 100%),
+      radial-gradient(1px 1px at 70% 80%, rgba(255,255,255,0.5) 0%, transparent 100%),
+      radial-gradient(1px 1px at 85% 35%, rgba(255,255,255,0.6) 0%, transparent 100%),
+      radial-gradient(1.5px 1.5px at 20% 90%, rgba(255,255,255,0.4) 0%, transparent 100%),
+      radial-gradient(1px 1px at 60% 45%, rgba(255,255,255,0.5) 0%, transparent 100%),
+      radial-gradient(1px 1px at 40% 75%, rgba(255,255,255,0.3) 0%, transparent 100%),
+      radial-gradient(1px 1px at 90% 55%, rgba(255,255,255,0.5) 0%, transparent 100%),
+      radial-gradient(1.5px 1.5px at 5% 50%, rgba(255,255,255,0.6) 0%, transparent 100%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrapper {
+    position: relative;
+    z-index: 1;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 24px 16px 60px;
+  }
+
+  /* HEADER */
+  header {
+    text-align: center;
+    margin-bottom: 28px;
+  }
+  .logo {
+    font-family: 'Fredoka One', cursive;
+    font-size: clamp(2.2rem, 6vw, 3.2rem);
+    background: linear-gradient(135deg, var(--gold) 0%, var(--orange) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: 1px;
+    line-height: 1.1;
+  }
+  .tagline {
+    color: rgba(255,255,255,0.55);
+    font-size: 0.95rem;
+    margin-top: 4px;
+  }
+
+  /* HUD */
+  .hud {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 28px;
+  }
+  .hud-chip {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 50px;
+    padding: 8px 20px;
+    font-weight: 700;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    backdrop-filter: blur(8px);
+  }
+  .hud-chip .icon { font-size: 1.2rem; }
+  .hud-chip.score .icon { color: var(--gold); }
+  .hud-chip.lives .icon { color: var(--pink); }
+  .hud-chip.level .icon { color: var(--teal); }
+
+  /* PROGRESS BAR */
+  .progress-track {
+    background: rgba(255,255,255,0.08);
+    border-radius: 50px;
+    height: 10px;
+    margin-bottom: 28px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--teal), var(--gold));
+    border-radius: 50px;
+    transition: width 0.5s ease;
+  }
+
+  /* QUESTION CARD */
+  .question-card {
+    background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.04) 100%);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 36px 32px;
+    text-align: center;
+    margin-bottom: 24px;
+    backdrop-filter: blur(12px);
+    animation: slideUp 0.4s ease;
+  }
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .topic-badge {
+    display: inline-block;
+    padding: 4px 14px;
+    border-radius: 50px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 18px;
+  }
+  .badge-add    { background: rgba(0,191,165,0.2); color: var(--teal); border: 1px solid rgba(0,191,165,0.4); }
+  .badge-sub    { background: rgba(233,30,140,0.2); color: var(--pink); border: 1px solid rgba(233,30,140,0.4); }
+  .badge-mul    { background: rgba(245,200,66,0.2); color: var(--gold); border: 1px solid rgba(245,200,66,0.4); }
+  .badge-div    { background: rgba(255,112,67,0.2); color: var(--orange); border: 1px solid rgba(255,112,67,0.4); }
+  .badge-mixed  { background: rgba(156,39,176,0.2); color: #ce93d8; border: 1px solid rgba(156,39,176,0.4); }
+
+  .question-text {
+    font-family: 'Fredoka One', cursive;
+    font-size: clamp(2rem, 6vw, 3rem);
+    line-height: 1.2;
+    margin-bottom: 8px;
+  }
+  .question-hint {
+    color: rgba(255,255,255,0.45);
+    font-size: 0.88rem;
+  }
+
+  /* CHOICES */
+  .choices {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+  .choice-btn {
+    background: var(--card);
+    border: 2px solid var(--border);
+    border-radius: 16px;
+    padding: 18px 12px;
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.5rem;
+    color: #fff;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .choice-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(255,255,255,0);
+    transition: background 0.15s;
+  }
+  .choice-btn:hover:not(:disabled)::before { background: rgba(255,255,255,0.06); }
+  .choice-btn:hover:not(:disabled) { border-color: rgba(255,255,255,0.35); transform: translateY(-2px); }
+  .choice-btn:disabled { cursor: default; }
+  .choice-btn.correct {
+    background: rgba(0,230,118,0.18);
+    border-color: var(--correct);
+    animation: pop 0.35s ease;
+  }
+  .choice-btn.wrong {
+    background: rgba(255,23,68,0.15);
+    border-color: var(--wrong);
+    animation: shake 0.4s ease;
+  }
+  @keyframes pop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.07); }
+    100% { transform: scale(1); }
+  }
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    25% { transform: translateX(-6px); }
+    75% { transform: translateX(6px); }
+  }
+
+  /* FEEDBACK */
+  .feedback {
+    text-align: center;
+    font-size: 1.1rem;
+    font-weight: 700;
+    min-height: 32px;
+    margin-bottom: 16px;
+    animation: fadeIn 0.25s ease;
+  }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  .feedback.correct-msg { color: var(--correct); }
+  .feedback.wrong-msg   { color: #ff6e6e; }
+
+  /* NEXT BTN */
+  .next-btn {
+    display: block;
+    margin: 0 auto;
+    background: linear-gradient(135deg, var(--gold), var(--orange));
+    color: #1a0a00;
+    border: none;
+    border-radius: 50px;
+    padding: 14px 44px;
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    box-shadow: 0 6px 24px rgba(245,200,66,0.35);
+  }
+  .next-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(245,200,66,0.45); }
+  .next-btn:active { transform: translateY(0); }
+  .next-btn:disabled { opacity: 0.4; cursor: default; transform: none; }
+
+  /* SCREENS */
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* START SCREEN */
+  .start-screen {
+    text-align: center;
+    padding: 20px 0;
+  }
+  .start-emoji { font-size: 5rem; margin-bottom: 16px; display: block; animation: float 3s ease-in-out infinite; }
+  @keyframes float {
+    0%,100% { transform: translateY(0); }
+    50% { transform: translateY(-12px); }
+  }
+  .start-title { font-family: 'Fredoka One', cursive; font-size: 2rem; margin-bottom: 10px; }
+  .start-desc { color: rgba(255,255,255,0.6); margin-bottom: 32px; line-height: 1.6; font-size: 1rem; }
+
+  .mode-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+  .mode-btn {
+    background: var(--card);
+    border: 2px solid var(--border);
+    border-radius: 16px;
+    padding: 16px 12px;
+    color: #fff;
+    cursor: pointer;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 700;
+    font-size: 0.95rem;
+    transition: all 0.18s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+  .mode-btn .m-icon { font-size: 1.8rem; }
+  .mode-btn:hover, .mode-btn.selected {
+    border-color: var(--gold);
+    background: rgba(245,200,66,0.1);
+  }
+
+  .start-btn {
+    background: linear-gradient(135deg, var(--teal), #00897b);
+    border: none;
+    border-radius: 50px;
+    padding: 16px 52px;
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.4rem;
+    color: #fff;
+    cursor: pointer;
+    box-shadow: 0 6px 24px rgba(0,191,165,0.4);
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .start-btn:hover { transform: translateY(-3px); box-shadow: 0 10px 32px rgba(0,191,165,0.5); }
+
+  /* GAME OVER SCREEN */
+  .end-screen { text-align: center; padding: 24px 0; }
+  .end-trophy { font-size: 5rem; margin-bottom: 16px; display: block; }
+  .end-title { font-family: 'Fredoka One', cursive; font-size: 2.2rem; margin-bottom: 8px; }
+  .end-score-big {
+    font-family: 'Fredoka One', cursive;
+    font-size: 4rem;
+    background: linear-gradient(135deg, var(--gold), var(--orange));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 8px;
+  }
+  .end-desc { color: rgba(255,255,255,0.55); margin-bottom: 32px; font-size: 1rem; }
+  .end-stats {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-bottom: 32px;
+  }
+  .stat-box {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 16px 24px;
+    min-width: 110px;
+  }
+  .stat-val { font-family: 'Fredoka One', cursive; font-size: 1.8rem; }
+  .stat-label { font-size: 0.78rem; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+
+  .play-again-btn {
+    background: linear-gradient(135deg, var(--gold), var(--orange));
+    border: none;
+    border-radius: 50px;
+    padding: 15px 48px;
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.3rem;
+    color: #1a0a00;
+    cursor: pointer;
+    box-shadow: 0 6px 24px rgba(245,200,66,0.35);
+    transition: transform 0.15s;
+  }
+  .play-again-btn:hover { transform: translateY(-2px); }
+
+  /* STREAK */
+  .streak-banner {
+    background: linear-gradient(90deg, rgba(245,200,66,0.15), rgba(255,112,67,0.15));
+    border: 1px solid rgba(245,200,66,0.3);
+    border-radius: 12px;
+    padding: 8px 16px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: var(--gold);
+    margin-bottom: 16px;
+    animation: fadeIn 0.3s ease;
+  }
+
+  @media (max-width: 480px) {
+    .choices { grid-template-columns: 1fr 1fr; gap: 10px; }
+    .choice-btn { font-size: 1.3rem; padding: 14px 8px; }
+    .mode-grid { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="wrapper">
+  <header>
+    <div class="logo">🚀 Math Quest</div>
+    <div class="tagline">Adventure through numbers!</div>
+  </header>
+
+  <!-- START SCREEN -->
+  <div id="startScreen" class="screen active">
+    <div class="start-screen">
+      <span class="start-emoji">🧠</span>
+      <div class="start-title">Ready to level up your math skills?</div>
+      <div class="start-desc">Answer 10 questions, earn points, and unlock higher levels.<br>Pick your challenge mode below!</div>
+
+      <div class="mode-grid">
+        <button class="mode-btn selected" data-mode="addition" onclick="selectMode(this)">
+          <span class="m-icon">➕</span>
+          <span>Addition</span>
+        </button>
+        <button class="mode-btn" data-mode="subtraction" onclick="selectMode(this)">
+          <span class="m-icon">➖</span>
+          <span>Subtraction</span>
+        </button>
+        <button class="mode-btn" data-mode="multiplication" onclick="selectMode(this)">
+          <span class="m-icon">✖️</span>
+          <span>Multiplication</span>
+        </button>
+        <button class="mode-btn" data-mode="mixed" onclick="selectMode(this)">
+          <span class="m-icon">🎲</span>
+          <span>Mixed</span>
+        </button>
+      </div>
+
+      <button class="start-btn" onclick="startGame()">Start Quest! 🚀</button>
+    </div>
+  </div>
+
+  <!-- GAME SCREEN -->
+  <div id="gameScreen" class="screen">
+    <div class="hud">
+      <div class="hud-chip score"><span class="icon">⭐</span><span id="scoreDisplay">0</span></div>
+      <div class="hud-chip lives"><span class="icon">❤️</span><span id="livesDisplay">3</span></div>
+      <div class="hud-chip level"><span class="icon">⚡</span>Level <span id="levelDisplay">1</span></div>
+    </div>
+
+    <div class="progress-track">
+      <div class="progress-fill" id="progressFill" style="width:0%"></div>
+    </div>
+
+    <div id="streakBanner" class="streak-banner" style="display:none"></div>
+
+    <div class="question-card" id="questionCard">
+      <div id="topicBadge" class="topic-badge badge-add">Addition</div>
+      <div class="question-text" id="questionText">12 + 7 = ?</div>
+      <div class="question-hint" id="questionHint">Choose the correct answer</div>
+    </div>
+
+    <div class="choices" id="choicesGrid"></div>
+
+    <div class="feedback" id="feedbackMsg"></div>
+
+    <button class="next-btn" id="nextBtn" onclick="nextQuestion()" disabled>Next →</button>
+  </div>
+
+  <!-- END SCREEN -->
+  <div id="endScreen" class="screen">
+    <div class="end-screen">
+      <span class="end-trophy" id="trophyEmoji">🏆</span>
+      <div class="end-title" id="endTitle">Quest Complete!</div>
+      <div class="end-score-big" id="finalScore">0 pts</div>
+      <div class="end-desc" id="endDesc">Great effort!</div>
+      <div class="end-stats">
+        <div class="stat-box">
+          <div class="stat-val" id="statCorrect">0</div>
+          <div class="stat-label">Correct</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-val" id="statAccuracy">0%</div>
+          <div class="stat-label">Accuracy</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-val" id="statStreak">0</div>
+          <div class="stat-label">Best Streak</div>
+        </div>
+      </div>
+      <button class="play-again-btn" onclick="showStart()">Play Again 🔄</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  let gameMode = 'addition';
+  let score = 0;
+  let lives = 3;
+  let level = 1;
+  let questionIndex = 0;
+  let totalQuestions = 10;
+  let correctAnswer = 0;
+  let streak = 0;
+  let bestStreak = 0;
+  let correctCount = 0;
+  let answered = false;
+
+  function selectMode(btn) {
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    gameMode = btn.dataset.mode;
+  }
+
+  function startGame() {
+    score = 0; lives = 3; level = 1;
+    questionIndex = 0; streak = 0; bestStreak = 0; correctCount = 0;
+    showScreen('gameScreen');
+    updateHUD();
+    generateQuestion();
+  }
+
+  function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+  }
+
+  function updateHUD() {
+    document.getElementById('scoreDisplay').textContent = score;
+    document.getElementById('livesDisplay').textContent = '❤️'.repeat(lives);
+    document.getElementById('levelDisplay').textContent = level;
+  }
+
+  function getRange() {
+    if (level === 1) return [1, 12];
+    if (level === 2) return [5, 25];
+    if (level === 3) return [10, 50];
+    return [20, 100];
+  }
+
+  function rand(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
+  function generateQuestion() {
+    answered = false;
+    document.getElementById('feedbackMsg').textContent = '';
+    document.getElementById('nextBtn').disabled = true;
+    document.getElementById('streakBanner').style.display = 'none';
+
+    const [min, max] = getRange();
+    const ops = gameMode === 'mixed'
+      ? ['+', '-', '×'][rand(0, level >= 2 ? 2 : 1)]
+      : { addition: '+', subtraction: '-', multiplication: '×' }[gameMode];
+
+    let a, b, question, badge, badgeClass, hint;
+
+    if (ops === '+') {
+      a = rand(min, max); b = rand(min, max);
+      correctAnswer = a + b;
+      question = `${a} + ${b} = ?`;
+      badge = 'Addition'; badgeClass = 'badge-add';
+      hint = 'Add the two numbers together';
+    } else if (ops === '-') {
+      a = rand(min, max); b = rand(min, a);
+      correctAnswer = a - b;
+      question = `${a} − ${b} = ?`;
+      badge = 'Subtraction'; badgeClass = 'badge-sub';
+      hint = 'Find the difference';
+    } else {
+      a = rand(2, Math.min(12, level * 4)); b = rand(2, Math.min(12, level * 4));
+      correctAnswer = a * b;
+      question = `${a} × ${b} = ?`;
+      badge = 'Multiplication'; badgeClass = 'badge-mul';
+      hint = 'Multiply the numbers';
+    }
+
+    document.getElementById('topicBadge').textContent = badge;
+    document.getElementById('topicBadge').className = `topic-badge ${badgeClass}`;
+    document.getElementById('questionText').textContent = question;
+    document.getElementById('questionHint').textContent = hint;
+
+    // Update progress
+    const pct = (questionIndex / totalQuestions) * 100;
+    document.getElementById('progressFill').style.width = pct + '%';
+
+    // Animate card
+    const card = document.getElementById('questionCard');
+    card.style.animation = 'none';
+    card.offsetHeight;
+    card.style.animation = 'slideUp 0.4s ease';
+
+    // Generate choices
+    const choices = generateChoices(correctAnswer);
+    const grid = document.getElementById('choicesGrid');
+    grid.innerHTML = '';
+    choices.forEach(val => {
+      const btn = document.createElement('button');
+      btn.className = 'choice-btn';
+      btn.textContent = val;
+      btn.onclick = () => checkAnswer(val, btn);
+      grid.appendChild(btn);
+    });
+  }
+
+  function generateChoices(correct) {
+    const choices = new Set([correct]);
+    const spread = Math.max(3, Math.floor(correct * 0.3));
+    while (choices.size < 4) {
+      let wrong = correct + rand(-spread, spread);
+      if (wrong !== correct && wrong >= 0) choices.add(wrong);
+    }
+    return [...choices].sort(() => Math.random() - 0.5);
+  }
+
+  function checkAnswer(val, btn) {
+    if (answered) return;
+    answered = true;
+
+    const allBtns = document.querySelectorAll('.choice-btn');
+    allBtns.forEach(b => b.disabled = true);
+
+    const fb = document.getElementById('feedbackMsg');
+
+    if (val === correctAnswer) {
+      btn.classList.add('correct');
+      streak++;
+      correctCount++;
+      bestStreak = Math.max(bestStreak, streak);
+      const points = 10 + (streak > 1 ? (streak - 1) * 5 : 0) + (level - 1) * 5;
+      score += points;
+
+      if (streak >= 3) {
+        const banner = document.getElementById('streakBanner');
+        banner.style.display = 'block';
+        banner.textContent = `🔥 ${streak}x Streak! +${points} pts`;
+        fb.textContent = '';
+      } else {
+        fb.textContent = `✅ Correct! +${points} pts`;
+        fb.className = 'feedback correct-msg';
+      }
+
+      // Level up every 3 correct
+      if (correctCount % 3 === 0 && level < 4) {
+        level++;
+        setTimeout(() => {
+          fb.textContent = `⚡ Level Up! You're now Level ${level}!`;
+          fb.className = 'feedback correct-msg';
+        }, 600);
+      }
+    } else {
+      btn.classList.add('wrong');
+      streak = 0;
+      lives--;
+      // Show correct answer
+      allBtns.forEach(b => {
+        if (parseInt(b.textContent) === correctAnswer) b.classList.add('correct');
+      });
+      fb.textContent = `❌ Oops! The answer was ${correctAnswer}`;
+      fb.className = 'feedback wrong-msg';
+
+      if (lives <= 0) {
+        setTimeout(endGame, 800);
+        return;
+      }
+    }
+
+    updateHUD();
+    questionIndex++;
+
+    if (questionIndex >= totalQuestions) {
+      setTimeout(endGame, 900);
+    } else {
+      document.getElementById('nextBtn').disabled = false;
+    }
+  }
+
+  function nextQuestion() {
+    generateQuestion();
+  }
+
+  function endGame() {
+    const accuracy = Math.round((correctCount / totalQuestions) * 100);
+
+    document.getElementById('finalScore').textContent = score + ' pts';
+    document.getElementById('statCorrect').textContent = `${correctCount}/${totalQuestions}`;
+    document.getElementById('statAccuracy').textContent = accuracy + '%';
+    document.getElementById('statStreak').textContent = bestStreak;
+
+    let trophy, title, desc;
+    if (accuracy >= 90) { trophy = '🏆'; title = 'Math Champion!'; desc = 'You nailed it! Incredible accuracy!'; }
+    else if (accuracy >= 70) { trophy = '🥇'; title = 'Great Job!'; desc = 'You\'re getting really good at this!'; }
+    else if (accuracy >= 50) { trophy = '🥈'; title = 'Nice Try!'; desc = 'Keep practicing — you\'re improving!'; }
+    else { trophy = '🌱'; title = 'Keep Going!'; desc = 'Every expert started as a beginner!'; }
+
+    document.getElementById('trophyEmoji').textContent = trophy;
+    document.getElementById('endTitle').textContent = title;
+    document.getElementById('endDesc').textContent = desc;
+
+    showScreen('endScreen');
+  }
+
+  function showStart() {
+    showScreen('startScreen');
+  }
+</script>
+</body>
+</html>
